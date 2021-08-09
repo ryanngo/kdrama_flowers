@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://d3js.org/d3.v3.min.js"></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.1/lodash.js'></script>
+  <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700' rel='stylesheet' type='text/css'>
+  
+  <style>
+    body {
+      font-family: "Libre Baskerville";
+      color: #444;
+    }
+    
+    a {
+      color: #444;
+    }
+    
+    .all {
+      width: 1090px;
+      margin: auto;
+    }
+    
+    .header {
+      text-align: center;
+      margin-top: 60px;
+    }
+    
+    .header svg {
+      width: 100%;
+      height: 500px;
+      margin: 40px 0;
+    }
+    .header h1 {
+      font-size: 64px;
+      margin-bottom: 0px;
+    }
+    .header .description {
+      margin: 20px auto;
+      width: 320px;
+      font-size: 18px;
+    }
+    
+    .content {
+      position: relative;
+    }
+    
+    .content svg {
+      position: absolute;
+      width: 900px;
+      height: 4200px;
+      top: 0;
+    }
+    
+    .years {
+      position: absolute;
+      top: 0;
+      text-align: center;
+    }
+    
+    .year {
+      font-size: 28px;
+    }
+    
+    .titles {
+      position: absolute;
+      top: 0;
+      text-align: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    
+    /* blend options taken from visual cinnamon tutorial: http://www.visualcinnamon.com/2016/05/beautiful-color-blending-svg-d3.html */
+    /*Set isolate on the group element*/
+    .flower {
+      isolation: isolate;
+
+    }  
+    /*Set blend mode on SVG element: e.g. screen, multiply*/
+    .flower circle, .legend circle { mix-blend-mode: darken; }
+  </style>
+</head>
+
+<body>
+  <div class='all'>
+    <div class='header'>
+      <h1>korean drama flowers</h1>
+      <div class='description'>
+        <p>korean dramas reimagined as flowers</p>
+        (<a href='https://ngoryan98.wixsite.com/my-site' target='_new'>ryan ngo</a>)
+      </div>
+      <svg></svg>
+
+    </div>
+    <div class='content'>
+      <svg></svg>
+      <div class='years'></div>
+      <div class='titles'></div>
+    </div>
+  </div>
+  
+  <script>
+    var strokeColor = '#444';
+    var flowerSize = 150;
+    var padding = 20;
+    var legend = d3.select('.header svg');
+    
+    var svg = d3.select('.content svg')
+    	.style('left', flowerSize + 'px')
+    	.append('g')
+    	.attr('transform', 'translate(' + [padding, padding] + ')');
+    var years = d3.select('.years');
+    var titles = d3.select('.titles')
+    	.style('left', flowerSize + 'px')
+    	.style('padding', padding + 'px');
+    
+
+    // petal pathings to create flower petals
+
+      var petalPaths = [[
+    'M -15,0 C-35 35 35 35 15 0 C 50 25 -5 75 0 100 C-5 55 -50 25 -15 0'
+    ],
+    [
+    'M -15,0 C-35 35 35 35 15 0 C 50 25 -5 75 0 70 C-5 55 -50 25 -15 0'
+    ],
+    [
+    'M -15,0 C 40 25 -5 75 0 100 C-5 55 -40 25 -15 0'
+    ],
+    [
+    'M -15,0 C-35 35 35 35 15 0 C 30 25 -5 75 0 80 C-5 55 -30 25 -15 0'
+    ],
+    [
+    "M0, 0  C20 20 50 70 20 110 L0 85 L-20 110 C-50 70 -20 20 0 0"  
+    ],
+    [
+    'M0 0 C20 40 20 70 10 80 L0 85 L-10 80 C-20 70 -20 40 0 0'
+    ],
+    [
+    'M0 0 C20 40 20 70 10 100 L0 45 L-10 100 C-20 70 -20 40 0 0'
+    ],
+    [
+    "M0, 0  C0 50 50 70 10 110 L0 100 L-10 110 C-50 70 -0 50 0 0"
+    ],
+    [
+    'M0 0 C20 55 20 45 0 40 C-20 45 -20 55 0 0'
+    ],
+    [
+    'M0 0 C40 75 40 65 0 80 C-40 65 -40 75 0 0'
+    ],
+    [
+    'M0 0 C20 55 20 45 0 100 C-20 45 -20 55 0 0'
+    ],
+    [
+    'M0 0 C20 55 20 65 0 100 C0 80 -20 25 -80 70 C -80 70 -80 20 0 0'
+    ],
+    [
+    'M0 0 C20 40 20 70 10 60 L0 85 L-10 60 C-20 70 -20 40 0 0'
+    ],
+    [
+    'M0 0 C20 40 20 70 10 60 L0 55 L-10 60 C-20 70 -20 40 0 0'
+    ],
+    [
+    'M0 0 C0 40 20 80 10 100 L0 85 L-10 100 C-20 70 -0 40 0 0'
+    ],
+    [
+    'M0 0 C30 40 30 70 10 100 L0 85 L-10 100 C-30 70 -0 40 0 0'
+    ],
+    [
+    'M0 0 C20 40 20 70 10 100 L0 85 L-10 100 C-20 70 -20 40 0 0'
+    ]];
+
+    
+    // blur effect taken from visualcinnamon:
+    // http://www.visualcinnamon.com/2016/05/real-life-motion-effects-d3-visualization.html
+    var defs = svg.append("defs");
+    defs.append("filter")
+      .attr("id", "motionFilter") 	//Give it a unique ID
+      .attr("width", "300%")		//Increase the width of the filter region to remove blur "boundary"
+      .attr("x", "-20%") 			//Make sure the center of the "width" lies in the middle of the element
+      .append("feGaussianBlur")	//Append a filter technique
+      .attr("in", "SourceGraphic")	//Perform the blur on the applied element
+      .attr("stdDeviation", "8 8");	//Do a blur of 8 standard deviations in the horizontal and vertical direction
+    
+    /*****************************************************
+    ** get kdrama data
+    ******************************************************/
+    d3.csv("kdrama.csv", function(kdrama) {
+    const ratingName = "Rating(Out of 10)";
+    const viewershipName = "Viewship Rate";
+    const yearName = "Year";
+    const genreName = "Genre";
+    const numberEps = "No of Episodes"
+    const kdramas = kdrama.sort(function(a,b){return a.Year - b.Year});
+    const kdramaName = "Drama Name";
+    var kdramaRatingMinMax = d3.extent(kdramas, d => +d[ratingName]);    
+    var viewershipMinMax = d3.extent(kdramas, d => +d[viewershipName]);
+      
+    for (var i = 0; i < kdramas.length-1; i++) {  
+      kdramas[i][yearName] = parseInt(kdramas[i][yearName]);
+    };  
+      
+
+    for (var i = 0; i < kdramas.length; i++) {  
+      kdramas[i][genreName] = String(kdramas[i][genreName]).replaceAll(' ','').split(',');
+      
+    };
+
+      var topGenres = _.chain(kdramas)
+            .map(genreName).flatten()
+            .countBy().toPairs()
+            .sortBy(1).map(0)
+            .takeRight(4)
+            .value();
+    topGenres.push('Other');
+
+    var allYears = _.chain(kdramas)
+            .map(d => parseInt(d[yearName])).uniq().value();  
+      
+    var numPetalScale = d3.scale.quantize().domain(viewershipMinMax)
+    	.range(_.range(3, 15));
+
+    var flowerSizeScale = d3.scale.linear()
+    .domain(kdramaRatingMinMax).range([.05, .5]);
+
+    var petalScale = d3.scale.ordinal()
+    	.domain(['8', '12', '13', '15', '16', '17', '18', '19', '20', '21', '22', '24', '25', '32', '36', '38', '40'])
+    	.range(_.range(17));
+
+    var petalColors = d3.scale.ordinal()
+    	.range(['#FF99C8', '#FCF6BD', '#D0F4DE', '#A9DEF9', '#E4C1F9']);
+
+      /*****************************************************
+      ** build legend
+      ******************************************************/
+      var fontSize = 12;
+      var legendWidth = 1090;
+      
+      // petal shapes
+      var legendPetalShapes = legend.append('g')
+      	.attr('transform', 'translate(' + (legendWidth / 3.5) + ',0)')
+      	.selectAll('g')
+      	.data(['8', '12', '13', '15', '16', '17', '18', '19', '20', '21', '22', '24', '25', '32', '36', '38', '40'])
+      	.enter().append('g')
+      	.attr('transform', function(d, i) {
+          var x = i * (flowerSize / 2.7) - 202.5;
+          return 'translate(' + [x, 0] + ')scale(0.5)';
+        });
+      legendPetalShapes.append('path')
+        .attr('fill', 'none')
+        .attr('stroke', strokeColor)
+        .attr('stroke-width', 4)
+        .attr('d', function(rating) {
+          return petalPaths[petalScale(rating)];
+        });
+      legendPetalShapes.append('text')
+      	.attr('y', flowerSize)
+      	.attr('text-anchor', 'middle')
+      	.attr('fill', strokeColor)
+      	.style('font-size', fontSize / .5 + 'px')
+        .text(function(d, i) {
+         	return d3.format('')(d)  +
+          	(i === 0 ? ' episodes' : '');
+       	});
+
+
+      // petal colors
+      var legendPetalColors = legend.append('g')
+      	.attr('transform',
+              'translate(' + [legendWidth / 2, flowerSize * .9] + ')')
+      	.selectAll('g').data(topGenres)
+      	.enter().append('g')
+        .attr('transform', function(d, i) {
+          var x = i * (flowerSize / 2) - flowerSize;
+          return 'translate(' + [x, 0] + ')scale(0.5)';
+        });
+      legendPetalColors.append('circle')
+      	.attr('r', flowerSize / 3)
+      	.attr('fill', function(d) {return petalColors(d)})
+      	.style("filter", "url(#motionFilter)");
+      legendPetalColors.append('text')
+      	.attr('y', flowerSize * .75)
+      	.attr('text-anchor', 'middle')
+      	.attr('fill', strokeColor)
+      	.style('font-size', fontSize / .5 + 'px')
+      	.text(function(d) {return d});
+
+
+
+      // number of petals in a flower
+      var legendNumPetals = legend.append('g')
+      	.attr('transform',
+              'translate(' + [legendWidth / 2, flowerSize * .9 * 2] + ')')
+      	.selectAll('g')
+      	.data(_.times(5, function(i) {
+          var viewership = viewershipMinMax[0] + (viewershipMinMax[1] - viewershipMinMax[0]) / 4 * i;
+          return viewership;
+        })).enter().append('g')
+        .attr('transform', function(d, i) {
+          var x = i * (flowerSize * .6) - (flowerSize * .6 * 2);
+          return 'translate(' + [x, 0] + ')scale(0.3)';
+        });
+      
+      legendNumPetals.selectAll('path')
+        .data(function(d) {
+        	var numPetals = numPetalScale(d);
+        	var path = petalPaths[petalScale('16')];
+          return _.times(numPetals, function(i) {
+            return {
+              angle: (360/numPetals) * i,
+              path: path
+            }
+          });
+        }).enter().append('path')
+        .attr('stroke', strokeColor)
+        .attr('stroke-width', 2 / .3)
+        .attr('fill', 'none')
+        .attr('d', function(d) {return d.path.join(' ')})
+        .attr('transform', function(d) {
+          return 'rotate(' + [d.angle] + ')';
+        });
+      
+      legendNumPetals.append('text')
+      	.attr('y', flowerSize * 1.25)
+      	.attr('text-anchor', 'middle')
+      	.attr('fill', strokeColor)
+      	.style('font-size', fontSize / .3 + 'px')
+      	.text(function(d, i) {
+         	return d3.format('.2f"')(d)  +
+          	(i === 0 ? ' viewership' : '');
+       	});
+
+
+      // size of flower 
+      var legendPetalSizes = legend.append('g')
+      	.attr('transform',
+              'translate(' + [legendWidth / 2, flowerSize * .9 * 3] + ')')
+      	.selectAll('g')
+      	.data(_.times(5, function(i) {
+          return kdramaRatingMinMax[0] + (kdramaRatingMinMax[1] - kdramaRatingMinMax[0]) / 4 * i;
+        })).enter().append('g')
+        .attr('transform', function(d, i) {
+          var x = i * (flowerSize * .8) - (flowerSize * .8 * 2);
+          return 'translate(' + [x, 0] + ')';
+        });
+      
+      legendPetalSizes.selectAll('path')
+        .data(function(rating) {
+        	var numPetals = 5;
+        	var path = petalPaths[petalScale('13')];
+          return _.times(numPetals, function(i) {
+            return {
+              scale: flowerSizeScale(rating),
+              angle: (360/numPetals) * i,
+              path: path
+            }
+          });
+        }).enter().append('path')
+        .attr('stroke', strokeColor)
+        .attr('stroke-width', function(d) {
+          return 2 / d.scale;
+        }).attr('fill', 'none')
+        .attr('d', function(d) {return d.path.join(' ')})
+        .attr('transform', function(d) {
+          return 'rotate(' + [d.angle] + ')scale(' + d.scale + ')';
+        });
+      
+      legendPetalSizes.append('text')
+      	.attr('y', flowerSize / 2)
+      	.attr('dy', '.35em')
+      	.attr('text-anchor', 'middle')
+      	.attr('fill', strokeColor)
+      	.style('font-size', fontSize)
+        .text(function(d, i) {
+         	return d3.format('.1f')(d) + ' / 10'+
+          	(i === 0 ? ' rating' : '');
+       	});
+      /*****************************************************
+      ** draw all flowers
+      ******************************************************/
+      
+      // draw flower for each movie
+      var flowers = svg.selectAll('g.flower')
+        .data(_.values(kdramas)).enter().append('g')
+        .classed('flower', true)
+        .attr('transform', function(d, i) {
+          var scale = flowerSizeScale(d[ratingName]);
+          var x = (i % 5) * flowerSize * 1.25;
+          var y = Math.floor(i / 5) * flowerSize * 1.5;
+          return 'translate(' + [x, y] +
+            ')scale(' + scale + ')';
+        });
+
+      // create the data for each flower's colors
+      flowers.selectAll('circle')
+      	.data(function(d) {
+        	// if there's only one genre, center the circle
+        	var cy = d[genreName].length === 1 ? 0 : -flowerSize / 5;
+        	return _.map(d[genreName], function(genre, i) {
+            genre = _.includes(topGenres, genre) ? genre : 'Other';
+            return {
+              cy: cy,
+              scale: flowerSizeScale(d[ratingName]),
+              angle: (360/d[genreName].length) * i,
+              fill: petalColors(genre)
+            }
+          });
+        }).enter().append('circle')
+      	.attr('cy', function(d) {return d.cy})
+        .attr('r', flowerSize / 2)
+      	.attr('fill', function(d) {return d.fill})
+      	.attr('transform', function(d) {
+          var x = flowerSize / 2 / d.scale;
+          var y = flowerSize / 2 / d.scale;
+          return 'translate(' + [x, y] +
+            ')rotate(' + d.angle + ')';
+        }).style("filter", "url(#motionFilter)");
+
+     // draw the flower petals
+     flowers.selectAll('path.petal')
+        .data(function(d) {
+        	var numPetals = numPetalScale(d[viewershipName]);
+        	var path = petalPaths[petalScale(d[viewershipName])];
+
+          return _.times(numPetals, function(i) {
+            return {
+              scale: flowerSizeScale(d[ratingName]),
+              angle: (360/numPetals) * i,
+              path: path
+            }
+          });
+        }).enter().append('path')
+      	.classed('petal', true)
+        .attr('stroke', strokeColor)
+        .attr('stroke-width', function(d) {
+        	return 2 / d.scale;
+        }).attr('fill', 'none')
+        .attr('d', function(d) {return d.path.join(' ')})
+        .attr('transform', function(d) {
+          var cx = flowerSize / 2 / d.scale;
+          var cy = flowerSize / 2 / d.scale;
+          return 'translate(' + [cx, cy] +
+            ')rotate(' + [d.angle] + ')';});
+      
+      /*****************************************************
+      ** add annotation
+      ******************************************************/
+      // add the years to titles
+      years.selectAll('.year')
+      	.data(allYears).enter().append('h1')
+      	.classed('year', true)
+      	.style('margin', 0)
+      	.style('position', 'absolute')
+      	.style('width', flowerSize + 'px')
+        .style('top', function(d, i) {
+        	return i * flowerSize * 1.5 + flowerSize / 2 + 'px';
+        })
+        .text(function(d) {return d});
+      
+      // finally add the titles
+      titles.selectAll('.title')
+      	.data(_.values(kdramas))
+        .enter().append('div')
+      	.classed('title', true)
+      	.style('position', 'absolute')
+      	.style('padding', '0 ' + padding + 'px')
+      	.style('width', flowerSize * 1.25 - 2 * padding + 'px')
+      	.style('left', function(d, i) {
+        	return (i % 5) * flowerSize * 1.25 + 'px';
+      	}).style('top', function(d, i) {
+        	return Math.floor(i / 5) * flowerSize * 1.5 + flowerSize * 1.1 + 'px';
+        }).text(function(d) {
+        	return d[kdramaName];
+        });
+});
+    
+    
+  </script>
+</body>
